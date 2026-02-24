@@ -1,45 +1,64 @@
-# Day 44 — Solidity Inheritance (Safe to Extend)
+# Day 44 — Solidity Inheritance (Protocol-Safe Design)
 
-This repo demonstrates **protocol-grade inheritance** in Solidity:  
-**final public state transition + internal virtual hooks**.
+This project demonstrates **safe-to-extend inheritance** in Solidity.
 
-## Goal
+Instead of making public functions `virtual`, we lock core state transitions
+and expose controlled extension points via internal hooks.
 
-Show how to design inheritance that is:
-- extensible
-- but **invariant-safe**
-- and predictable under dispatch (`override`)
+---
 
 ## Architecture
 
-### BaseVault (final public API)
+### BaseVault
+
 - `deposit()` is **NOT virtual**
-- extension is allowed only through hooks:
-  - `_beforeDeposit(from, amount)`
-  - `_afterDeposit(from, amount)`
+- Extension allowed only via:
+  - `_beforeDeposit()`
+  - `_afterDeposit()`
 
-This prevents child contracts from accidentally changing:
-- state transition order
-- event emission
-- core accounting invariants
+Invariant:
 
-### PointsVault (safe extension)
-Overrides `_afterDeposit` to award points:
-- core deposit accounting remains unchanged
-- extension logic is isolated and testable
+address(this).balance == totalDeposits
+
+
+The state transition is fixed:
+1. Before hook
+2. Accounting update
+3. Event emission
+4. After hook
+
+This prevents child contracts from:
+- breaking accounting
+- changing state transition order
+- introducing unsafe interactions
+
+---
+
+### PointsVault
+
+Overrides `_afterDeposit()` to award points.
+
+Core accounting remains untouched.
+
+---
 
 ## Key Concepts
 
-- Inheritance linearizes storage: base vars first, then child vars
-- `virtual/override` is explicit to avoid accidental dispatch bugs
-- Hooks reduce attack surface vs overriding `deposit()`
+- Storage linearization in inheritance
+- Explicit `virtual` / `override`
+- Hook pattern vs overriding public functions
+- Invariant protection
+- Reduced attack surface
+
+---
 
 ## Tests
 
-- verifies `Deposit` event emission
-- verifies `totalDeposits` accounting
-- verifies PointsVault hook effect (`points`)
+- Verifies deposit event
+- Verifies accounting update
+- Verifies hook-based extension
 
 Run:
+
 ```bash
 npx hardhat test
