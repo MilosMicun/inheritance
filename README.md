@@ -58,6 +58,8 @@ Core accounting remains untouched.
 - Verifies accounting update
 - Verifies hook-based extension
 
+Includes force-send edge case (selfdestruct) proving that ETH can bypass public state transitions and break naive invariants.
+
 Run:
 
 ```bash
